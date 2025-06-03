@@ -21,20 +21,35 @@ A simple desktop-based User Account Management System built with Python and Tkin
    ```bash
    git clone https://github.com/yourusername/tkinter-account-manager.git
    cd tkinter-account-manager
+Run the app
 
-2.   Run the app
-   python main.py
-
+bash
+Copy
+Edit
+python main.py
 File Structure
+graphql
+Copy
+Edit
 tkinter-account-manager/
 ├── main.py               # Main Tkinter GUI logic
 ├── user_account.py       # User account class and methods
 ├── accounts.json         # Stores registered user data
 ├── README.md             # Project documentation
+Screenshots
+Include screenshots of your login/register GUI here if available.
 
-3. Future Improvements
-  Add password hashing for better security
-  Improve UI with more styles/themes
-  Add password reset functionality
-  Connect to a real database (e.g., SQLite or Firebase)
+Future Improvements
+Add password hashing for better security
+
+Improve UI with more styles/themes
+
+Add password reset functionality
+
+Connect to a real database (e.g., SQLite or Firebase)
+
+License
+MIT License — feel free to use and modify this project for personal or educational use.
+
+Made with ❤️ in Python
   
