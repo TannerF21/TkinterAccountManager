@@ -2,173 +2,211 @@ import json
 import os
 import ttkbootstrap as tb
 from ttkbootstrap.constants import *
-import tkinter.messagebox as messagebox  # FIXED: standard messagebox
+from tkinter import messagebox, StringVar, BooleanVar
 
-DATA_FILE = 'accounts.json'
+ACCOUNTS_FILE = 'accounts.json'
+current_theme = "flatly"
 
-# ------------------- Data Handling ------------------- #
 def load_accounts():
-    if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, 'r') as f:
+    if os.path.exists(ACCOUNTS_FILE):
+        with open(ACCOUNTS_FILE, 'r') as f:
             return json.load(f)
     return []
 
 def save_accounts(accounts):
-    with open(DATA_FILE, 'w') as f:
+    with open(ACCOUNTS_FILE, 'w') as f:
         json.dump(accounts, f, indent=4)
 
-accounts = load_accounts()
+def register_window():
+    reg_win = tb.Toplevel()
+    reg_win.transient(root)
+    reg_win.grab_set()
+    reg_win.title("Create Account")
+    reg_win.geometry("500x300")
+    reg_win.resizable(True, True)
 
-# ------------------- Dashboard Window ------------------- #
-def show_main_app(current_user):
-    def refresh_account_list():
-        account_list.delete(*account_list.get_children())
-        for i, acc in enumerate(accounts):
-            account_list.insert("", "end", values=(i + 1, acc['username'], acc['email']))
+    frame = tb.Frame(reg_win, padding=30)
+    frame.pack(fill=BOTH, expand=True)
+    frame.columnconfigure(1, weight=1)
 
-    def add_account():
+    tb.Label(frame, text="Register", font=("Segoe UI", 18, "bold")).grid(row=0, column=0, columnspan=2, pady=(0, 20))
+
+    tb.Label(frame, text="Username:").grid(row=1, column=0, sticky="e", padx=(0, 10))
+    username_entry = tb.Entry(frame, width=30)
+    username_entry.grid(row=1, column=1, sticky="ew")
+
+    tb.Label(frame, text="Email:").grid(row=2, column=0, sticky="e", padx=(0, 10))
+    email_entry = tb.Entry(frame, width=30)
+    email_entry.grid(row=2, column=1, sticky="ew")
+
+    tb.Label(frame, text="Password:").grid(row=3, column=0, sticky="e", padx=(0, 10))
+    password_entry = tb.Entry(frame, show="*", width=30)
+    password_entry.grid(row=3, column=1, sticky="ew")
+
+    tb.Label(frame, text="Confirm Password:").grid(row=4, column=0, sticky="e", padx=(0, 10))
+    confirm_entry = tb.Entry(frame, show="*", width=30)
+    confirm_entry.grid(row=4, column=1, sticky="ew")
+
+    def register():
         username = username_entry.get().strip()
         email = email_entry.get().strip()
         password = password_entry.get().strip()
-        if not username or not email or not password:
+        confirm = confirm_entry.get().strip()
+
+        if not username or not email or not password or not confirm:
             messagebox.showwarning("Missing Fields", "Please fill out all fields.")
             return
-        accounts.append({'username': username, 'email': email, 'password': password})
-        save_accounts(accounts)
-        refresh_account_list()
-        username_entry.delete(0, END)
-        email_entry.delete(0, END)
-        password_entry.delete(0, END)
-
-    def delete_selected():
-        selected = account_list.selection()
-        if not selected:
-            messagebox.showinfo("Select Account", "Please select an account to delete.")
+        if password != confirm:
+            messagebox.showerror("Mismatch", "Passwords do not match.")
             return
-        index = int(account_list.item(selected[0])['values'][0]) - 1
-        del accounts[index]
+        accounts = load_accounts()
+        if any(a['email'] == email for a in accounts):
+            messagebox.showerror("Exists", "Email already registered.")
+            return
+        accounts.append({"username": username, "email": email, "password": password})
         save_accounts(accounts)
-        refresh_account_list()
+        messagebox.showinfo("Success", "Account created!")
+        reg_win.destroy()
 
-    def view_profile():
-        messagebox.showinfo("Profile", f"Username: {current_user['username']}\nEmail: {current_user['email']}")
+    tb.Button(frame, text="Register", command=register, bootstyle="success-outline").grid(row=5, column=0, columnspan=2, pady=20)
 
-    def logout():
-        root.destroy()
-        show_auth_window()
+def main_app(username):
+    def build_window():
+        def logout():
+            main_win.destroy()
+            launch_login_window()
 
-    root = tb.Window(themename="darkly")
-    root.title("User Account Manager")
-    root.geometry("650x520")
-    root.resizable(False, False)
+        main_win = tb.Window(themename=current_theme)
+        main_win.title("Dashboard")
+        main_win.geometry("800x500")
+        main_win.resizable(True, True)
 
-    header_frame = tb.Frame(root)
-    header_frame.pack(pady=10)
+        frame = tb.Frame(main_win, padding=30)
+        frame.pack(fill=BOTH, expand=True)
 
-    tb.Label(header_frame, text=f"Welcome, {current_user['username']}!", font=("Helvetica", 16, "bold")).pack(side=LEFT, padx=10)
-    tb.Button(header_frame, text="View Profile", bootstyle="secondary", command=view_profile).pack(side=LEFT, padx=5)
-    tb.Button(header_frame, text="Logout", bootstyle="danger", command=logout).pack(side=LEFT, padx=5)
+        tb.Label(frame, text=f"Welcome, {username}", font=("Segoe UI", 18)).pack(pady=10)
 
-    frame = tb.Frame(root)
-    frame.pack()
+        tree = tb.Treeview(frame, columns=("Username", "Email"), show="headings", bootstyle="info")
+        tree.heading("Username", text="Username")
+        tree.heading("Email", text="Email")
+        tree.pack(fill=BOTH, expand=True, pady=10)
 
-    tb.Label(frame, text="Username:").grid(row=0, column=0, padx=5, pady=5, sticky="e")
-    username_entry = tb.Entry(frame, width=30)
-    username_entry.grid(row=0, column=1, pady=5)
+        def refresh_tree():
+            tree.delete(*tree.get_children())
+            for acc in load_accounts():
+                tree.insert("", END, values=(acc["username"], acc["email"]))
 
-    tb.Label(frame, text="Email:").grid(row=1, column=0, padx=5, pady=5, sticky="e")
+        def delete_selected():
+            selected = tree.selection()
+            if not selected:
+                messagebox.showwarning("No selection", "Please select a user to delete.")
+                return
+            item = tree.item(selected[0])
+            email_to_delete = item['values'][1]
+            accounts = load_accounts()
+            accounts = [a for a in accounts if a["email"] != email_to_delete]
+            save_accounts(accounts)
+            refresh_tree()
+
+        def add_account_popup():
+            popup = tb.Toplevel(themename=current_theme)
+            popup.title("Add User")
+            popup.geometry("400x250")
+            popup.resizable(False, False)
+            pf = tb.Frame(popup, padding=20)
+            pf.pack(fill=BOTH, expand=True)
+            pf.columnconfigure(1, weight=1)
+
+            tb.Label(pf, text="Username:").grid(row=0, column=0, sticky="e", pady=5)
+            uname = tb.Entry(pf)
+            uname.grid(row=0, column=1, pady=5)
+
+            tb.Label(pf, text="Email:").grid(row=1, column=0, sticky="e", pady=5)
+            uemail = tb.Entry(pf)
+            uemail.grid(row=1, column=1, pady=5)
+
+            tb.Label(pf, text="Password:").grid(row=2, column=0, sticky="e", pady=5)
+            upass = tb.Entry(pf, show="*")
+            upass.grid(row=2, column=1, pady=5)
+
+            def add_user():
+                username, email, password = uname.get(), uemail.get(), upass.get()
+                if not username or not email or not password:
+                    messagebox.showerror("Missing", "All fields are required.")
+                    return
+                accounts = load_accounts()
+                if any(a['email'] == email for a in accounts):
+                    messagebox.showerror("Exists", "User already exists.")
+                    return
+                accounts.append({"username": username, "email": email, "password": password})
+                save_accounts(accounts)
+                popup.destroy()
+                refresh_tree()
+
+            tb.Button(pf, text="Add", command=add_user, bootstyle="success-outline").grid(row=3, column=0, columnspan=2, pady=15)
+
+        btns = tb.Frame(frame)
+        btns.pack(pady=10, anchor='center')
+        tb.Button(btns, text="Add User", command=add_account_popup, bootstyle="success").pack(side="left", padx=5)
+        tb.Button(btns, text="Delete Selected", command=delete_selected, bootstyle="danger").pack(side="left", padx=5)
+        tb.Button(frame, text="Logout", command=logout, bootstyle="info-outline").pack(pady=10)
+
+        refresh_tree()
+        main_win.mainloop()
+
+    build_window()
+
+def launch_login_window():
+    global root
+    root = tb.Window(themename=current_theme)
+    root.title("Login")
+    root.geometry("500x250")
+    root.minsize(400, 200)
+    root.resizable(True, True)
+
+    frame = tb.Frame(root, padding=30)
+    frame.pack(fill=BOTH, expand=True)
+    frame.columnconfigure(1, weight=1)
+
+    tb.Label(frame, text="User Login", font=("Segoe UI", 18, "bold")).grid(row=0, column=0, columnspan=2, pady=(0, 20))
+
+    tb.Label(frame, text="Email:").grid(row=1, column=0, sticky="e", padx=(0, 10))
     email_entry = tb.Entry(frame, width=30)
-    email_entry.grid(row=1, column=1, pady=5)
+    email_entry.grid(row=1, column=1, sticky="ew")
 
-    tb.Label(frame, text="Password:").grid(row=2, column=0, padx=5, pady=5, sticky="e")
-    password_entry = tb.Entry(frame, show="*", width=30)
-    password_entry.grid(row=2, column=1, pady=5)
+    tb.Label(frame, text="Password:").grid(row=2, column=0, sticky="e", padx=(0, 10), pady=(10, 0))
+    password_var = StringVar()
+    password_entry = tb.Entry(frame, textvariable=password_var, show="*", width=30)
+    password_entry.grid(row=2, column=1, sticky="ew", pady=(10, 0))
 
-    tb.Button(frame, text="Add Account", bootstyle="success", width=25, command=add_account).grid(row=3, column=0, columnspan=2, pady=10)
+    def toggle_password():
+        password_entry.config(show="" if show_pass.get() else "*")
 
-    columns = ("#", "Username", "Email")
-    account_list = tb.Treeview(root, columns=columns, show="headings", height=10, bootstyle="dark")
-    for col in columns:
-        account_list.heading(col, text=col)
-        account_list.column(col, anchor="center")
-    account_list.pack(pady=10)
+    show_pass = BooleanVar()
+    tb.Checkbutton(frame, text="Show Password", variable=show_pass, command=toggle_password).grid(row=3, column=1, sticky="w", pady=5)
 
-    tb.Button(root, text="Delete Selected", bootstyle="danger", width=25, command=delete_selected).pack(pady=5)
+    def try_login():
+        email = email_entry.get().strip()
+        password = password_var.get().strip()
+        accounts = load_accounts()
+        for acc in accounts:
+            if acc['email'] == email and acc['password'] == password:
+                root.destroy()
+                main_app(acc['username'])
+                return
+        messagebox.showerror("Failed", "Invalid credentials.")
 
-    refresh_account_list()
+    btn_frame = tb.Frame(frame)
+    btn_frame.grid(row=4, column=0, columnspan=2, pady=20)
+
+    tb.Button(btn_frame, text="Login", command=try_login, bootstyle="primary").pack(side="left", padx=5)
+    tb.Button(btn_frame, text="Create Account", command=register_window, bootstyle="secondary").pack(side="left", padx=5)
+
     root.mainloop()
+    return None
 
-# ------------------- Login/Register Window ------------------- #
-def show_auth_window():
-    win = tb.Window(themename="darkly")
-    win.title("Login / Register")
-    win.geometry("400x300")
-    win.resizable(False, False)
-
-    tabs = tb.Notebook(win)
-    login_tab = tb.Frame(tabs)
-    register_tab = tb.Frame(tabs)
-
-    tabs.add(login_tab, text="Login")
-    tabs.add(register_tab, text="Register")
-    tabs.pack(expand=1, fill="both")
-
-    # --- Login Tab --- #
-    tb.Label(login_tab, text="Email:").pack(pady=5)
-    login_email = tb.Entry(login_tab, width=30)
-    login_email.pack()
-
-    tb.Label(login_tab, text="Password:").pack(pady=5)
-    login_password = tb.Entry(login_tab, width=30, show="*")
-    login_password.pack()
-
-    def login_action():
-        email = login_email.get().strip()
-        password = login_password.get().strip()
-        for user in accounts:
-            if user['email'] == email and user['password'] == password:
-                win.destroy()
-                show_main_app(user)
-                return
-        messagebox.showerror("Login Failed", "Invalid email or password.")
-
-    tb.Button(login_tab, text="Log In", bootstyle="primary", command=login_action).pack(pady=10)
-
-    # --- Register Tab --- #
-    tb.Label(register_tab, text="Username:").pack(pady=5)
-    reg_username = tb.Entry(register_tab, width=30)
-    reg_username.pack()
-
-    tb.Label(register_tab, text="Email:").pack(pady=5)
-    reg_email = tb.Entry(register_tab, width=30)
-    reg_email.pack()
-
-    tb.Label(register_tab, text="Password:").pack(pady=5)
-    reg_password = tb.Entry(register_tab, width=30, show="*")
-    reg_password.pack()
-
-    def register_action():
-        username = reg_username.get().strip()
-        email = reg_email.get().strip()
-        password = reg_password.get().strip()
-        if not username or not email or not password:
-            messagebox.showwarning("Missing Fields", "Please complete all fields.")
-            return
-        for user in accounts:
-            if user['email'] == email:
-                messagebox.showerror("Already Exists", "That email is already registered.")
-                return
-        accounts.append({'username': username, 'email': email, 'password': password})
-        save_accounts(accounts)
-        messagebox.showinfo("Registered", "Account created! You can now log in.")
-        reg_username.delete(0, END)
-        reg_email.delete(0, END)
-        reg_password.delete(0, END)
-
-    tb.Button(register_tab, text="Register", bootstyle="success", command=register_action).pack(pady=10)
-
-    win.mainloop()
-
-# ------------------- Start App ------------------- #
-if __name__ == '__main__':
-    show_auth_window()
+if __name__ == "__main__":
+    while True:
+        root = launch_login_window()
+        if root is None:
+            break
