@@ -5,7 +5,7 @@ from ttkbootstrap.constants import *
 from tkinter import messagebox, StringVar, BooleanVar
 
 ACCOUNTS_FILE = 'accounts.json'
-current_theme = "flatly"
+current_theme = "superhero"
 
 def load_accounts():
     if os.path.exists(ACCOUNTS_FILE):
@@ -17,33 +17,34 @@ def save_accounts(accounts):
     with open(ACCOUNTS_FILE, 'w') as f:
         json.dump(accounts, f, indent=4)
 
-def register_window():
-    reg_win = tb.Toplevel()
-    reg_win.transient(root)
+def register_window(parent):
+    reg_win = tb.Toplevel(parent)
+    reg_win.transient(parent)
     reg_win.grab_set()
     reg_win.title("Create Account")
     reg_win.geometry("500x300")
     reg_win.resizable(True, True)
 
-    frame = tb.Frame(reg_win, padding=30)
+    frame = tb.Frame(reg_win, padding=30, bootstyle="dark")
     frame.pack(fill=BOTH, expand=True)
     frame.columnconfigure(1, weight=1)
 
-    tb.Label(frame, text="Register", font=("Segoe UI", 18, "bold")).grid(row=0, column=0, columnspan=2, pady=(0, 20))
+    tb.Label(frame, text="Register", font=("Segoe UI", 20, "bold"), bootstyle="primary")\
+.grid(row=0, column=0, columnspan=2, pady=(0, 20))
 
-    tb.Label(frame, text="Username:").grid(row=1, column=0, sticky="e", padx=(0, 10))
+    tb.Label(frame, text="👤 Username:").grid(row=1, column=0, sticky="e", padx=(0, 10), pady=5)
     username_entry = tb.Entry(frame, width=30)
     username_entry.grid(row=1, column=1, sticky="ew")
 
-    tb.Label(frame, text="Email:").grid(row=2, column=0, sticky="e", padx=(0, 10))
+    tb.Label(frame, text="📧 Email:").grid(row=2, column=0, sticky="e", padx=(0, 10), pady=5)
     email_entry = tb.Entry(frame, width=30)
     email_entry.grid(row=2, column=1, sticky="ew")
 
-    tb.Label(frame, text="Password:").grid(row=3, column=0, sticky="e", padx=(0, 10))
+    tb.Label(frame, text="🔑 Password:").grid(row=3, column=0, sticky="e", padx=(0, 10), pady=5)
     password_entry = tb.Entry(frame, show="*", width=30)
     password_entry.grid(row=3, column=1, sticky="ew")
 
-    tb.Label(frame, text="Confirm Password:").grid(row=4, column=0, sticky="e", padx=(0, 10))
+    tb.Label(frame, text="✅ Confirm Password:").grid(row=4, column=0, sticky="e", padx=(0, 10), pady=5)
     confirm_entry = tb.Entry(frame, show="*", width=30)
     confirm_entry.grid(row=4, column=1, sticky="ew")
 
@@ -68,7 +69,8 @@ def register_window():
         messagebox.showinfo("Success", "Account created!")
         reg_win.destroy()
 
-    tb.Button(frame, text="Register", command=register, bootstyle="success-outline").grid(row=5, column=0, columnspan=2, pady=20)
+    tb.Button(frame, text="🎉 Register", command=register, bootstyle="danger")\
+.grid(row=5, column=0, columnspan=2, pady=20)
 
 def main_app(username):
     def build_window():
@@ -81,7 +83,7 @@ def main_app(username):
         main_win.geometry("800x500")
         main_win.resizable(True, True)
 
-        frame = tb.Frame(main_win, padding=30)
+        frame = tb.Frame(main_win, padding=30, bootstyle="dark")
         frame.pack(fill=BOTH, expand=True)
 
         tb.Label(frame, text=f"Welcome, {username}", font=("Segoe UI", 18)).pack(pady=10)
@@ -113,7 +115,7 @@ def main_app(username):
             popup.title("Add User")
             popup.geometry("400x250")
             popup.resizable(False, False)
-            pf = tb.Frame(popup, padding=20)
+            pf = tb.Frame(popup, padding=20, bootstyle="dark")
             pf.pack(fill=BOTH, expand=True)
             pf.columnconfigure(1, weight=1)
 
@@ -147,9 +149,9 @@ def main_app(username):
 
         btns = tb.Frame(frame)
         btns.pack(pady=10, anchor='center')
-        tb.Button(btns, text="Add User", command=add_account_popup, bootstyle="success").pack(side="left", padx=5)
-        tb.Button(btns, text="Delete Selected", command=delete_selected, bootstyle="danger").pack(side="left", padx=5)
-        tb.Button(frame, text="Logout", command=logout, bootstyle="info-outline").pack(pady=10)
+        tb.Button(btns, text="➕ Add User", command=add_account_popup, bootstyle="success-outline").pack(side="left", padx=5)
+        tb.Button(btns, text="❌ Delete Selected", command=delete_selected, bootstyle="warning").pack(side="left", padx=5)
+        tb.Button(frame, text="🔓 Logout", command=logout, bootstyle="secondary").pack(pady=10)
 
         refresh_tree()
         main_win.mainloop()
@@ -164,11 +166,12 @@ def launch_login_window():
     root.minsize(400, 200)
     root.resizable(True, True)
 
-    frame = tb.Frame(root, padding=30)
+    frame = tb.Frame(root, padding=30, bootstyle="dark")
     frame.pack(fill=BOTH, expand=True)
     frame.columnconfigure(1, weight=1)
 
-    tb.Label(frame, text="User Login", font=("Segoe UI", 18, "bold")).grid(row=0, column=0, columnspan=2, pady=(0, 20))
+    tb.Label(frame, text="User Login", font=("Segoe UI", 20, "bold"), bootstyle="primary")\
+.grid(row=0, column=0, columnspan=2, pady=(0, 20))
 
     tb.Label(frame, text="Email:").grid(row=1, column=0, sticky="e", padx=(0, 10))
     email_entry = tb.Entry(frame, width=30)
@@ -199,8 +202,8 @@ def launch_login_window():
     btn_frame = tb.Frame(frame)
     btn_frame.grid(row=4, column=0, columnspan=2, pady=20)
 
-    tb.Button(btn_frame, text="Login", command=try_login, bootstyle="primary").pack(side="left", padx=5)
-    tb.Button(btn_frame, text="Create Account", command=register_window, bootstyle="secondary").pack(side="left", padx=5)
+    tb.Button(btn_frame, text="🚀 Login", command=try_login, bootstyle="danger-outline").pack(side="left", padx=5)
+    tb.Button(btn_frame, text="📝 Register", command=lambda: register_window(root), bootstyle="warning-outline").pack(side="left", padx=5)
 
     root.mainloop()
     return None
@@ -210,3 +213,4 @@ if __name__ == "__main__":
         root = launch_login_window()
         if root is None:
             break
+
